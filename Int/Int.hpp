@@ -9,23 +9,23 @@ class Num_In_Array_Out_Of_Range {};
 class Divide_By_Zero {};
 
 class Int {
-    std::vector<int> num;
-    int neg = 1;
+    std::vector<int8_t> num;
+    int8_t neg = 1;
     static bool isnum(char c) { return c <= '9' && c >= '0'; }
-    void push(int a) { num.push_back(a); }
-    int& end() { return *num.rbegin(); }
+    void push(int8_t a) { num.push_back(a); }
+    int8_t& end() { return *num.rbegin(); }
     inline static int max(int a, int b) { return a > b ? a : b; }
-    inline static int mod10(int a) { return a > 0 ? a % 10 : -(-a % 10); }
-    int subend(const Int& b, int pos) {
+    inline static int mod10(int a) { return a >= 0 ? a % 10 : -(-a % 10); }
+    int8_t subend(const Int& b, size_t pos) {
         Int tmp;
-        int bsz = b.num.size();
-        for (int i = 0; i < pos; ++i) {
+        size_t bsz = b.num.size();
+        for (size_t i = 0; i < pos; ++i) {
             tmp.push(0);
         }
-        for (int i = 0; i < bsz; ++i) {
+        for (size_t i = 0; i < bsz; ++i) {
             tmp.push(b.num[i]);
         }
-        int qa = 0;
+        int8_t qa = 0;
         for (; qa < 10; ++qa) {
             if (tmp > *this) return qa;
             *this -= tmp;
@@ -38,24 +38,28 @@ class Int {
         now.num.clear();
         std::string s;
         in >> s;
-        for (auto it = s.rbegin(); it != s.rend(); ++it) {
+        for (string::reverse_iterator it = s.rbegin(); it != s.rend(); ++it) {
             if (*it == '-')
                 now.neg = -1;
             else if (!isnum(*it))
                 throw(Get_None_Num());
-            else
+            else {
                 now.num.push_back(*it - '0');
+            }
         }
+        while (!now.num.empty() && !now.num.back()) now.num.pop_back();
+        if (now.num.empty()) now.num.push_back(0);
         return in;
     }
     friend std::ostream& operator<<(std::ostream& out, const Int& now) {
         if (now.neg == -1) out << '-';
-        for (auto it = now.num.rbegin(); it != now.num.rend(); ++it) {
-            out << *it;
+        for (vector<int8_t>::const_reverse_iterator it = now.num.rbegin();
+             it != now.num.rend(); ++it) {
+            out << int(*it);
         }
         return out;
     }
-    Int() = default;
+    Int(){};
     Int(int a) {
         num.clear();
         if (a < 0) {
@@ -88,14 +92,18 @@ class Int {
         }
     }
     Int(const std::string& a) {
-        for (auto it = a.rbegin(); it != a.rend(); ++it) {
+        for (string::const_reverse_iterator it = a.rbegin(); it != a.rend();
+             ++it) {
             if (*it == '-')
                 neg = -1;
             else if (!isnum(*it))
                 throw(Get_None_Num());
-            else
+            else {
                 num.push_back(*it - '0');
+            }
         }
+        while (!num.empty() && !num.back()) num.pop_back();
+        if (num.empty()) num.push_back(0);
     }
     Int(const char s[]) { Int(std::string(s)); }
     Int abs() const {
@@ -173,12 +181,13 @@ class Int {
         for (; pos < max(asz, bsz); ++pos) {
             int sum = a.neg * (pos < asz ? a.num[pos] : 0) +
                       b.neg * (pos < bsz ? b.num[pos] : 0);
-            int& end = tmp.end();
+            int8_t& end = tmp.end();
             int res = end + sum;
             end = mod10(res);
             tmp.push(res / 10);
         }
-        while (tmp.end() == 0) tmp.num.pop_back();
+        while (!tmp.num.empty() && !tmp.end()) tmp.num.pop_back();
+        if (tmp.num.empty()) tmp.push(0);
         int nowneg = (tmp.end() > 0 ? 1 : -1);
         tmp.neg = nowneg;
         int tmpsz = tmp.num.size();
@@ -189,8 +198,8 @@ class Int {
             }
             tmp.num[pos] *= nowneg;
         }
-        while (tmp.end() == 0) tmp.num.pop_back();
-        if (tmp.num.size() == 0) tmp.push(0);
+        while (!tmp.num.empty() && !tmp.end()) tmp.num.pop_back();
+        if (tmp.num.empty()) tmp.push(0);
         return tmp;
     }
     Int& operator+=(const Int& a) {
@@ -220,7 +229,7 @@ class Int {
             for (size_t i = 0; i <= posa; ++i) tmp.push(0);
             for (size_t posb = 0; posb < b.num.size(); ++posb) {
                 int res = a.num[posa] * b.num[posb];
-                int& end = tmp.end();
+                int8_t& end = tmp.end();
                 end += res % 10;
                 tmp.push(res / 10);
             }
@@ -243,15 +252,13 @@ class Int {
             ans.neg = -1;
         else
             ans.neg = 1;
-        int asz = a.num.size(), bsz = b.num.size();
-        int ansz = asz - bsz + 1;
-        int* tmpa = new int[ansz];
-        for (int pos = ansz - 1; pos >= 0; --pos) {
-            tmpa[pos] = a.subend(b, pos);
+        size_t asz = a.num.size(), bsz = b.num.size();
+        size_t ansz = asz - bsz + 1;
+        ans.num.resize(ansz);
+        for (size_t pos = ansz; pos > 0; --pos) {
+            ans.num[pos - 1] = a.subend(b, pos - 1);
         }
-        while (!tmpa[ansz - 1]) --ansz;
-        ans.num = std::vector<int>(tmpa, tmpa + ansz);
-        delete[] tmpa;
+        while (!ans.num.empty() && !ans.num.back()) ans.num.pop_back();
         return std::pair<Int, Int>(ans, a);
     }
     friend const Int operator/(const Int& a, const Int& b) {
